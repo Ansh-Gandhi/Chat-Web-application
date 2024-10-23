@@ -1,0 +1,242 @@
+body {
+    margin: 0;
+    font-family: Helvetica, sans-serif;
+    background-color: #fcf8fb;
+}
+
+#app-view {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#app-menu {
+    width: 100%;
+    display: flex;
+    justify-content: space-evenly;
+    margin: 0;
+    align-items: center;
+    background-color: #C179B9;
+    padding: 0;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    justify-content: space-between;
+}
+
+#app-menu li:hover {
+    filter: invert(100%);
+    background-color: #75BF7D;
+}
+
+.menu-item {
+    display: inline;
+    cursor: pointer;
+}
+
+.room-img, .profile-img{
+    filter: invert(100%) sepia(99%) saturate(0%) hue-rotate(98deg) brightness(106%) contrast(101%);
+    height: 40px;
+}
+
+.menu-item a {
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    padding: 15px 90px;
+}
+
+.nav-text {
+    margin-left: 10px;
+}
+
+#page-view {
+    height: 100%;
+    width: 100%;
+}
+
+.page-control {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 15px 0px;
+    background-color: #C179B9;
+}
+
+input {
+    padding: 10px;
+    border: 1px solid #703469;
+    background-color: white;
+}
+
+input::placeholder {
+    color: #74366c;
+}
+
+button {
+    background-color: white;
+    padding: 10px;
+    cursor: pointer;
+    margin-left: 10px;
+    border: 1px solid #703469;
+}
+
+.room-list {
+    padding: 0;
+    margin: 0;
+}
+
+.room-list li a img {
+    height: 50px;
+    width: 55px;
+    border-radius: 50%;
+}
+
+.room-list li {
+    background-color: #f1e1ef;
+    border-bottom: 1px solid #d9add3;
+}
+
+.room-list li a {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    color: #74366c;
+}
+
+.chatroom-text {
+    margin-left: 20px;
+}
+
+
+.room-list li {
+    list-style-type: none;
+}
+
+.room-list li:hover {
+    background-color: #e0bcdc;
+    cursor: pointer;
+}
+
+.form-field {
+    border-bottom: 1px solid #d9add3;
+    padding: 20px;
+}
+
+.profile-page-img {
+    height: 40px;
+    border-radius: 50%;
+    filter: invert(25%) sepia(9%) saturate(4796%) hue-rotate(260deg) brightness(90%) contrast(83%);
+    margin-left: 20px;
+    position: relative;
+    top: 13px;
+}
+
+#username, #password {
+    margin-left: 50px;
+}
+
+#about {
+    margin-left: 80px;
+    border: 1px solid #703469;
+}
+
+#avatar-image {
+    border: none;
+    background-color: #fcf8fb;
+}
+
+button {
+    color: #74366c;
+    padding: 10px 30px;
+    background-color: #fcf8fb;
+    cursor: pointer;
+    border: 1px solid #703469;
+}
+
+label[for="about"] {
+    position: relative;
+    bottom: 85px;
+}
+
+label, input {
+    color: #74366c;
+}
+
+textarea {
+    border: 1px solid #703469;
+    color: #74366c;
+}
+
+.message-list {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.message {
+    background-color: #e1c0dd;
+    padding: 10px;
+    margin: 10px;
+    border-radius: 10px;
+    width: 80%;
+    align-self: flex-start; 
+    display: flex;
+    flex-direction: column;
+}
+
+.my-message {
+    background-color: #502274;
+    padding: 10px;
+    margin: 10px;
+    border-radius: 10px;
+    max-width: 100%;
+    align-self: flex-end; 
+    display: flex;
+    flex-direction: column; 
+}
+
+.message-user {
+    font-weight: bold; 
+    margin-bottom: 5px; 
+    color: white;
+}
+
+div[class="message"] .message-text, div[class="message"] .message-user {
+    color: black;
+}
+
+.message-text {
+    color: white; 
+}
+
+h4 {
+    color: #703469;
+    background-color: #f4e6f1;
+    margin: 0;
+    padding: 15px;
+}
+
+@media (min-width: 1024px) {
+    #app-view {
+        width: 80%;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    #app-view {
+        width: 90%;
+    }
+}
+
+@media (max-width: 767px) {
+    #app-view {
+        width: 100%;
+    }
+}
