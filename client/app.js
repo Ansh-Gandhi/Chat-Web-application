@@ -38,6 +38,23 @@ var Service = {
         .catch(error => {
             return Promise.reject(error);
         });
+    },
+
+    getLastConversation: function(roomId, before) {
+        let url = `${this.origin}/chat/${roomId}/messages?before=${before}`;
+
+        return fetch(url)
+        .then(res => {
+            if (!res.ok) {
+                return res.text().then(errorMsg => {
+                    throw new Error(errorMsg || `HTTP error. Status: ${res.status}`)
+                });
+            }
+            return res.json();
+        })
+        .catch(error => {
+            return Promise.reject(error);
+        })
     }
 };
 
@@ -47,7 +64,7 @@ function emptyDOM (elem) {
 }
 
 // Creates a DOM element from the given HTML string
-function createDOM (htmlString){
+function createDOM (htmlString) {
     let template = document.createElement('template');
     template.innerHTML = htmlString.trim();
     return template.content.firstChild;
@@ -83,14 +100,40 @@ function main() {
             document.querySelector('#page-view').appendChild(lobbyView.elem);
         } else if(hash.substring(2, 6) === "chat") {
             const roomID = hash.split('/')[2]; 
-            const room = lobby.getRoom(roomID);
-    
-                if(room) {
-                    chatView.setRoom(room);
-                    document.querySelector('#page-view').appendChild(chatView.elem);
-                } else {
-                    console.log("Room not found");
+            
+            Service.getAllRooms()
+    .then(rooms => {
+        let found = false;
+        for (let i = 0; i < rooms.length; i++) {
+            if (rooms[i]._id == roomID) {
+                const roomInstance = lobby.getRoom(roomID) || new Room(rooms[i]._id, rooms[i].name, rooms[i].image, rooms[i].messages);
+                const time = Date.now()
+                return Service.getLastConversation(roomID, time)
+                .then(lastMessages => {
+                    // Set the messages from the last conversation
+                    
+                    roomInstance.messages = (lastMessages) ? lastMessages.messages : roomInstance.messages;
+                    if (!roomInstance) {
+                        roomInstance.messages = [];
+                    }
+                // If roomInstance is newly created, add it to the lobby
+                if (!lobby.getRoom(roomID)) {
+                    lobby.addRoom(roomInstance.id, roomInstance.name, roomInstance.image, roomInstance.messages);
                 }
+                
+                chatView.setRoom(roomInstance);
+                document.querySelector('#page-view').appendChild(chatView.elem);
+                });
+            }
+        }
+        
+        if (!found) {
+            console.log("Room not found");
+        }
+    })
+    .catch(error => {
+        console.log("Failed to get rooms:", error);
+    });
         } else if(hash.substring(2, 9) === "profile") {
             document.querySelector('#page-view').appendChild(profileView.elem);
         }
@@ -99,12 +142,12 @@ function main() {
     function refreshLobby () {
         Service.getAllRooms().then(rooms => {
             rooms.forEach(room => {
-                if(room.id in lobby.rooms) {
-                    lobby.rooms[room.id].image = room.image;
-                    lobby.rooms[room.id].name = room.name;
+                if(room._id in lobby.rooms) {
+                    lobby.rooms[room._id].image = room.image;
+                    lobby.rooms[room._id].name = room.name;
                 }
                 else {
-                    lobby.addRoom(room.id, room.name, room.image, room.messages);
+                    lobby.addRoom(room._id, room.name, room.image, room.messages);
                 }
             });
         })
@@ -163,7 +206,7 @@ class LobbyView {
 
             Service.addRoom(roomData)
                 .then(newRoom => {
-                    this.lobby.addRoom(newRoom.id, newRoom.name, newRoom.image);
+                    this.lobby.addRoom(newRoom._id, newRoom.name, newRoom.image);
                     this.inputElem.value = "";
                 })
                 .catch(error => {
@@ -222,6 +265,12 @@ class ChatView {
                 this.sendMessage();
             }
         });
+
+        this.chatElem.addEventListener("wheel", (event) => {
+            if(this.chatElem.scrollTop <= 0 && event.deltaY < 0 && this.room.canLoadConversation) {
+                this.room.getLastConversation.next();
+            }
+        });
     }
 
     sendMessage() {
@@ -233,7 +282,7 @@ class ChatView {
                 username: profile.username,
                 text: message
             }
-
+            
             this.room.addMessage(profile.username, message);
             this.socket.send(JSON.stringify(messageData));
             this.inputElem.value = "";
@@ -256,7 +305,29 @@ class ChatView {
             );
 
             this.chatElem.appendChild(messageElem);
+
+            this.room.getLastConversation = makeConversationLoader(this.room);
         });
+
+        this.room.onFetchConversation = (conversation) => {
+            const prevScrollHeight = this.chatElem.scrollTop;
+        
+            for (let i = conversation.messages.length - 1; i >= 0; i--) {
+                const messageClass = conversation.messages[i].username === profile.username ? "my-message" : "";
+                const messageElem = createDOM(
+                    `<div class = "message ${messageClass}">
+                        <span class = "message-user">${conversation.messages[i].username}</span>
+                        <span class = "message-text">${conversation.messages[i].text}</span>
+                    </div>`
+                );
+
+                this.chatElem.prepend(messageElem);
+            }
+
+            const newScrollHeight = this.chatElem.scrollTop;
+            this.chatElem.scrollTop = newScrollHeight - prevScrollHeight;
+
+        }
 
         this.room.onNewMessage = (message) => {
             const messageClass = message.username === profile.username ? "my-message" : "";
@@ -307,12 +378,36 @@ class ProfileView {
     }
 }
 
+    function* makeConversationLoader(room) { 
+        var mostRecentTimestamp = room.timestamp;
+
+        while(room.canLoadConversation) {
+            room.canLoadConversation = false;
+            const conv = yield Service.getLastConversation(room.id, mostRecentTimestamp)
+            .then(result => {
+                if (result) {
+                    room.addConversation(result);
+                    room.canLoadConversation = true;
+                    mostRecentTimestamp = result.timestamp;
+                }
+                return result;
+            })
+            .catch(err => {
+                console.log("Error in generator: ", err);
+            })
+        }
+    }
+
+
 class Room {
     constructor(id, name, image = "assets/everyone-icon.png", messages = []) {
         this.id = id;
         this.name = name;
         this.image = image;
         this.messages = messages;
+        this.timestamp = Date.now()
+        this.canLoadConversation = true;
+        this.getLastConversation = makeConversationLoader(this);
     }
 
     addMessage(username, text) {
@@ -331,10 +426,17 @@ class Room {
             this.onNewMessage(message)
         }
     }
+    
+    addConversation(conversation) {
+        this.messages = [...conversation.messages, ...this.messages];
+        if(typeof this.onFetchConversation === "function") {
+            this.onFetchConversation(conversation);
+        }
+    }
 }
 
 class Lobby { 
-    constructor() { 
+    constructor() {
         this.rooms = {};
     }
 
