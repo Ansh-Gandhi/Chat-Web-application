@@ -145,4 +145,21 @@ Database.prototype.addConversation = function(conversation){
 	)
 }
 
+Database.prototype.getUser = function(username) {
+	return this.connected.then(db =>
+		new Promise((resolve, reject) => {
+			const query = {username: username};
+
+			const users = db.collection("users");
+
+			users.findOne(query)
+			.then(result => {
+				resolve(result);
+			})
+			.catch(err => {
+				reject(err);
+			})
+		}))
+}
+
 module.exports = Database;

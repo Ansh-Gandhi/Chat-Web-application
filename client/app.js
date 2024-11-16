@@ -55,33 +55,66 @@ var Service = {
         .catch(error => {
             return Promise.reject(error);
         })
+    },
+
+    getProfile: function() {
+        let url = `${this.origin}/profile`;
+
+        return fetch(url)
+        .then(res => {
+            return res.json();
+        })
+        .catch(error => {
+            return Promise.reject(error);
+        })
     }
 };
 
-// Removes the contents of the given DOM element (equivalent to elem.innerHTML = '' but faster)
 function emptyDOM (elem) {
     while (elem.firstChild) elem.removeChild(elem.firstChild);
 }
 
-// Creates a DOM element from the given HTML string
 function createDOM (htmlString) {
     let template = document.createElement('template');
     template.innerHTML = htmlString.trim();
     return template.content.firstChild;
 }
 
-let profile = {username: "Alice"}
+let profile = {username: ""};
 
 function main() {
+
+    Service.getProfile()
+    .then(result => {
+        profile.username = result.username;
+    })
+    .catch(err => {
+        console.log("Cannot get profile: ", err);
+    });
+
     const socket = new WebSocket("ws://localhost:8000");
 
     socket.addEventListener("message", (event) => {
         const message = JSON.parse(event.data);
 
+        var sanitized = "";
+
+        for (let i = 0; i < message.text.length; i++) {
+            if(message.text[i] === "<") {
+                sanitized += "&lt;";
+            }
+            else if (message.text[i] === ">") {
+                sanitized += "&gt;";
+            } 
+            else {
+                sanitized += message.text[i];
+            }
+        }
+
         const room = lobby.getRoom(message.roomId);
         
         if(room) {
-            room.addMessage(message.username, message.text);
+            room.addMessage(message.username, sanitized);
         }
     });
 
@@ -99,41 +132,39 @@ function main() {
         if(hash.substring(2) === "") {
             document.querySelector('#page-view').appendChild(lobbyView.elem);
         } else if(hash.substring(2, 6) === "chat") {
-            const roomID = hash.split('/')[2]; 
+            const roomID = hash.split('/')[2];
             
             Service.getAllRooms()
-    .then(rooms => {
-        let found = false;
-        for (let i = 0; i < rooms.length; i++) {
-            if (rooms[i]._id == roomID) {
-                const roomInstance = lobby.getRoom(roomID) || new Room(rooms[i]._id, rooms[i].name, rooms[i].image, rooms[i].messages);
-                const time = Date.now()
-                return Service.getLastConversation(roomID, time)
-                .then(lastMessages => {
-                    // Set the messages from the last conversation
-                    
-                    roomInstance.messages = (lastMessages) ? lastMessages.messages : roomInstance.messages;
-                    if (!roomInstance) {
-                        roomInstance.messages = [];
+            .then(rooms => {
+                let found = false;
+                for (let i = 0; i < rooms.length; i++) {
+                    if (rooms[i]._id == roomID) {
+                        const roomInstance = lobby.getRoom(roomID) || new Room(rooms[i]._id, rooms[i].name, rooms[i].image, rooms[i].messages);
+                        const time = Date.now();
+                        return Service.getLastConversation(roomID, time)
+                        .then(lastMessages => {
+                            // roomInstance.messages = (lastMessages) ? lastMessages.messages.concat(roomInstance.messages) : roomInstance.messages;
+
+                            if (!roomInstance) {
+                                roomInstance.messages = [];
+                            }
+                        if (!lobby.getRoom(roomID)) {
+                            lobby.addRoom(roomInstance.id, roomInstance.name, roomInstance.image, roomInstance.messages);
+                        }
+                        
+                        chatView.setRoom(roomInstance);
+                        document.querySelector('#page-view').appendChild(chatView.elem);
+                        });
                     }
-                // If roomInstance is newly created, add it to the lobby
-                if (!lobby.getRoom(roomID)) {
-                    lobby.addRoom(roomInstance.id, roomInstance.name, roomInstance.image, roomInstance.messages);
                 }
                 
-                chatView.setRoom(roomInstance);
-                document.querySelector('#page-view').appendChild(chatView.elem);
-                });
-            }
-        }
-        
-        if (!found) {
-            console.log("Room not found");
-        }
-    })
-    .catch(error => {
-        console.log("Failed to get rooms:", error);
-    });
+                if (!found) {
+                    console.log("Room not found");
+                }
+            })
+            .catch(error => {
+                console.log("Failed to get rooms:", error);
+            });
         } else if(hash.substring(2, 9) === "profile") {
             document.querySelector('#page-view').appendChild(profileView.elem);
         }
@@ -279,7 +310,6 @@ class ChatView {
         if(this.room && message) {
             const messageData = {
                 roomId: this.room.id,
-                username: profile.username,
                 text: message
             }
             
@@ -330,6 +360,22 @@ class ChatView {
         }
 
         this.room.onNewMessage = (message) => {
+            var sanitized = "";
+
+            for (let i = 0; i < message.text.length; i++) {
+                if(message.text[i] === "<") {
+                    sanitized += "&lt;";
+                }
+                else if (message.text[i] === ">") {
+                    sanitized += "&gt;";
+                } 
+                else {
+                    sanitized += message.text[i];
+                }
+            }
+
+            message.text = sanitized;
+            
             const messageClass = message.username === profile.username ? "my-message" : "";
             const messageElem = createDOM(
                 `<div class = "message ${messageClass}">
@@ -415,9 +461,23 @@ class Room {
             return;
         }     
 
+        var sanitized = "";
+
+        for (let i = 0; i < text.length; i++) {
+            if(text[i] === "<") {
+                sanitized += "&lt;";
+            }
+            else if (text[i] === ">") {
+                sanitized += "&gt;";
+            } 
+            else {
+                sanitized += text[i];
+            }
+        }
+
         const message = {
             username: username,
-            text: text,
+            text: sanitized
         };
 
         this.messages.push(message);
