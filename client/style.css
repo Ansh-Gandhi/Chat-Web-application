@@ -72,6 +72,7 @@ input {
     padding: 10px;
     border: 1px solid #703469;
     background-color: white;
+    border-radius: 6px;
 }
 
 input::placeholder {
@@ -158,6 +159,7 @@ button {
     background-color: #fcf8fb;
     cursor: pointer;
     border: 1px solid #703469;
+    border-radius: 6px;
 }
 
 label[for="about"] {
@@ -172,6 +174,7 @@ label, input {
 textarea {
     border: 1px solid #703469;
     color: #74366c;
+    border-radius: 6px;
 }
 
 .message-list {
@@ -227,13 +230,13 @@ h4 {
 
 @media (min-width: 1024px) {
     #app-view {
-        width: 80%;
+        width: 100%;
     }
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
     #app-view {
-        width: 90%;
+        width: 100%;
     }
 }
 
@@ -242,3 +245,4 @@ h4 {
         width: 100%;
     }
 }
+
