@@ -4,7 +4,7 @@
 
 ### Logistics
 
-- Developled a dynamic, real-time chat application using **HTML**, **CSS**, and **JavaScript** for the front end
+- Developled a dynamic, real-time chat application using **HTML**, **CSS**, and **JavaScript** to create a single page application interface
 
 - Utilized the **Model-View-Controller (MVC)** design pattern by structuring components into distinct layers to handle user input and interactions, ensuring a seamless and dynamic frontend experience
 
