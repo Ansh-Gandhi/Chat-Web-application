@@ -6,7 +6,7 @@ const Database = require('./Database');
 const SessionManager = require('./SessionManager');
 const crypto = require('crypto');
 
-function logRequest(req, res, next){
+function logRequest(req, res, next) {
 	console.log(`${new Date()}  ${req.ip} : ${req.method} ${req.path}`);
 	next();
 }

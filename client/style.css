@@ -246,3 +246,23 @@ h4 {
     }
 }
 
+.logout-button-list {
+    list-style-type: none;
+}
+
+.logout-button:hover {
+    background-color: #afdd8b;
+    cursor: pointer;
+    border: 1px solid #8fcb96;
+    color: black;
+}
+ 
+.logout-button {
+    background-color: #fcf8fb;
+    border: 1px solid #74366c;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 6px;
+    color: #74366c;
+    text-decoration: none;
+}
